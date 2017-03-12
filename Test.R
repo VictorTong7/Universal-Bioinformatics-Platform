@@ -14,9 +14,9 @@ ui <- fluidPage(
   verbatimTextOutput("category3"),
   
   selectInput("variable","Variable:",
-              c("category1" = "cyl",
-                "category2" = "am",
-                "category3" = "gear",
+              c("category1" = input$category_1,
+                "category2" = input$category_2,
+                "category3" = input$category_3,
                 "Not included" = "wt")),
   
   dataTableOutput("data"),
