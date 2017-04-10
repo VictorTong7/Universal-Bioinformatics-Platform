@@ -84,10 +84,14 @@ server <- function(input, output) {
   # render the table with the specified number of rows (will be keywords) without the option to further search (although we may want this)
   output$page3table <- DT::renderDataTable(selected[1:input$Key,], options=list(searching=FALSE))
   
-  # depending on the rows selected on page 3, make a new table
+  # display the whole table, but with the appropriate rows having the new category
+  # caveat here is that this refreshes every time
+  # next version needs to store this more permanently as an attribute of the table
+  
   output$SelectedRows <- renderDataTable({
     s = input$page3table_rows_selected
-    selected[s,]})
+    selected[s,'category'] <- input$selection
+    selected[1:input$Key,]})
 }
 
 shinyApp(ui, server)
