@@ -22,7 +22,7 @@ library(stringr)
 # Search function is not yet implemented in the UI
 #
 #
-all_gpl570<-read.csv('~/Dropbox/Retina_app/all_gpl570_april.csv')
+all_gpl570<-read.csv('all_gpl570_april.csv')
 
 # search strings –– next version we take these from the UI
 search_string_motorNeurons = "\\bbrain\\b|\\bneurons?(al)?\\b&\\bmotor\\b"
