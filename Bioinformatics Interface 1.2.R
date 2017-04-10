@@ -1,9 +1,10 @@
 library(shiny)
 # need a few more now...
 # if you need to install these to run on your local machine uncomment the following line:
-#install.packages(c('dplyr','tidyr','ggplot2','RColorBrewer','readr','stringr','shiny','shinythemes','shinyjs'))
+#install.packages(c('dplyr','tidyr','ggplot2','RColorBrewer','readr','stringr','shiny','shinythemes','shinyjs','DT'))
 library(shinythemes)
 library(shinyjs)
+library(DT)
 
 library(dplyr)
 library(tidyr)
@@ -63,9 +64,7 @@ server <- function(input, output) {
   output$cat2 <- renderText(input$cat2)
   output$cat3 <- renderText(input$cat3)
   
-  # checkbox function
-  rowSelect <- reactive({paste(sort(unique(input[["rows"]])),sep=',')
-                         })
+  
   output$page3 <- renderUI(
     fluidRow(
       column(3,
@@ -79,23 +78,15 @@ server <- function(input, output) {
   )
   
   output$page3.1 <- renderUI(
-    fluidRow(renderDataTable({
-      addCheckboxButtons<- paste0('<input type="checkbox" name="row', selected$id, '" value="', selected$id, '">',"")
-      cbind(Pick=addCheckboxButtons, selected[, , drop=FALSE])
-    }#)
-    #))}         
-    , options = list(orderClasses = TRUE, lengthMenu = c(5, 25, 50), pageLength = 25, escape=FALSE)
-    , callback = "function(table) {
-    table.on('change.dt', 'tr td input:checkbox', function() {
-      setTimeout(function () {
-         Shiny.onInputChange('rows', $(this).add('tr td input:checkbox:checked').parent().siblings(':last-child').map(function() {
-                 return $(this).text();
-              }).get())
-         }, 10); 
-    });
-}")
-  
+    fluidRow(DT::renderDataTable(selected, server=TRUE))
   )
+  output$page4 <- renderUI(renderPrint({
+    s = input$page3.1
+    if (length(s)){
+      cat('Rows selected:\n')
+      cat(s,sep=',')
+      }
+    })
   )
 }
 
