@@ -30,8 +30,10 @@ search_string_diabetes = "\\bpancreas\\b|\\bislets?\\b|\\bbeta-cells\\b|\\bdiabe
 search_string_hepatocytes = "\\bliver\\b&\\bhepatocytes?\\b"
 search_string_cardiomyocytes = "\\bheart\\b&\\bcardiomyocytes?\\b"
 
+# cut back the columns from the GSE info to make it more readable
 selected <- all_gpl570[,c(2,3,8)]
-selected$id <- 1:nrows(selected)
+
+# fill each row with 'not assigned' label, until they are placed in groups
 selected$category <- rep("Not assigned", nrow(selected))
 
 ui <- fluidPage(
@@ -50,8 +52,10 @@ ui <- fluidPage(
                       textInput("cat3", "Define Category 3"),
                       verbatimTextOutput("cat3")
                       ),
+            # changed the format of this slightly to accomodate the DT package (for row selection)
              tabPanel("Third Page", uiOutput("page3"), DT::dataTableOutput("page3table")
                       ),
+             # currently, page 4 displays the selected rows from page 3
              tabPanel("Fourth Page", uiOutput("page4"), 
                       dataTableOutput("SelectedRows")
                       )
@@ -77,8 +81,10 @@ server <- function(input, output) {
     )
   )
   
+  # render the table with the specified number of rows (will be keywords) without the option to further search (although we may want this)
   output$page3table <- DT::renderDataTable(selected[1:input$Key,], options=list(searching=FALSE))
   
+  # depending on the rows selected on page 3, make a new table
   output$SelectedRows <- renderDataTable({
     s = input$page3table_rows_selected
     selected[s,]})
