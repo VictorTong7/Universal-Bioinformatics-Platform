@@ -22,7 +22,7 @@ library(stringr)
 # Search function is not yet implemented in the UI
 #
 #
-all_gpl570<-read.csv('all_gpl570_april.csv')
+all_gpl570<-read.csv('all_gpl570.csv')
 
 # search strings –– next version we take these from the UI
 search_string_motorNeurons = "\\bbrain\\b|\\bneurons?(al)?\\b&\\bmotor\\b"
@@ -50,7 +50,7 @@ ui <- fluidPage(
                       textInput("cat3", "Define Category 3"),
                       verbatimTextOutput("cat3")
                       ),
-             tabPanel("Third Page", uiOutput("page3"), uiOutput("page3.1")
+             tabPanel("Third Page", uiOutput("page3"), DT::dataTableOutput("page3table")
                       ),
              tabPanel("Fourth Page", uiOutput("page4"), 
                       dataTableOutput("SelectedRows")
@@ -77,17 +77,11 @@ server <- function(input, output) {
     )
   )
   
-  output$page3.1 <- renderUI(
-    fluidRow(DT::renderDataTable(selected, server=TRUE))
-  )
-  output$page4 <- renderUI(renderPrint({
-    s = input$page3.1
-    if (length(s)){
-      cat('Rows selected:\n')
-      cat(s,sep=',')
-      }
-    })
-  )
+  output$page3table <- DT::renderDataTable(selected[1:input$Key,], options=list(searching=FALSE))
+  
+  output$SelectedRows <- renderDataTable({
+    s = input$page3table_rows_selected
+    selected[s,]})
 }
 
 shinyApp(ui, server)
