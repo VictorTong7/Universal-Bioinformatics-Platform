@@ -22,7 +22,7 @@ library(stringr)
 # Search function is not yet implemented in the UI
 #
 #
-all_gpl570<-read.csv('all_gpl570.csv')
+all_gpl570<-read.csv('all_gpl570_april.csv')
 
 # search strings –– next version we take these from the UI
 search_string_motorNeurons = "\\bbrain\\b|\\bneurons?(al)?\\b&\\bmotor\\b"
@@ -39,12 +39,12 @@ selected$category <- rep("Not assigned", nrow(selected))
 ui <- fluidPage(
   #creation of a navigation bar and mulitple pages
   navbarPage("Bioinformatics Software",
-             tabPanel("First Page",  
+             tabPanel("Search for GEO data series (GSE)",  
                       #setting user inputed values and displaying values back at the user
-                      numericInput("Key", "Enter number of rows", value = 16),
+                      textInput("Key", "Enter search terms, separated by commas", value = ""),
                       verbatimTextOutput("Key")
                       ),
-             tabPanel("Second Page", uiOutput("page2"), 
+             tabPanel("Define categories for GEO samples (GSM)", uiOutput("page2"), 
                       textInput("cat1", "Define Category 1"),
                       verbatimTextOutput("cat1"),
                       textInput("cat2", "Define Category 2"),
@@ -53,17 +53,17 @@ ui <- fluidPage(
                       verbatimTextOutput("cat3")
                       ),
             # changed the format of this slightly to accomodate the DT package (for row selection)
-             tabPanel("Third Page", uiOutput("page3"), DT::dataTableOutput("page3table")
+             tabPanel("Assign samples to categories", uiOutput("page3"), DT::dataTableOutput("page3table")
                       ),
              # currently, page 4 displays the selected rows from page 3
-             tabPanel("Fourth Page", uiOutput("page4"), 
+             tabPanel("Preview results", uiOutput("page4"), 
                       dataTableOutput("SelectedRows")
                       )
   )
 )
 
 server <- function(input, output) {
-  output$Key <- renderText(input$Key)
+  output$Key <- renderText(unlist(strsplit(input$Key,",")))
   output$cat1 <- renderText(input$cat1)
   output$cat2 <- renderText(input$cat2)
   output$cat3 <- renderText(input$cat3)
@@ -82,16 +82,17 @@ server <- function(input, output) {
   )
   
   # render the table with the specified number of rows (will be keywords) without the option to further search (although we may want this)
-  output$page3table <- DT::renderDataTable(selected[1:input$Key,], options=list(searching=FALSE))
+  output$page3table <- DT::renderDataTable(selected[1:8,], options=list(searching=FALSE))
   
   # display the whole table, but with the appropriate rows having the new category
   # caveat here is that this refreshes every time
   # next version needs to store this more permanently as an attribute of the table
+  # this will require a 'GO' button
   
   output$SelectedRows <- renderDataTable({
     s = input$page3table_rows_selected
     selected[s,'category'] <- input$selection
-    selected[1:input$Key,]})
+    selected[1:8,]})
 }
 
 shinyApp(ui, server)
