@@ -20,7 +20,7 @@ library(MergeMaid)
 library(GEOquery)
 library(testthat)
 library(metaArray)
-library(inSilicoMerging)
+#library(inSilicoMerging) not available for this version of R
 library(Rtsne)
 library(sva)
 library(affy)
@@ -29,8 +29,8 @@ library(affy)
 # Equivalent human platform is GPL570 with 127 514 samples
 # HG-U133_Plus_2] Affymetrix Human Genome U133 Plus 2.0 Array
 
-library(mouse4302.db) 
-library(hgu133plus2.db)
+#library(mouse4302.db) 
+#library(hgu133plus2.db)  Both aren't available
 
 # Other packages:
 #install.packages(c('dplyr','dbplyr','tidyr','ggplot2','RColorBrewer','readr','stringr','shiny','shinythemes','shinyjs','DT'))
@@ -67,37 +67,10 @@ gse_gsm = tbl(db, 'gse_gsm')
 # read CSV (all samples using the GPL570 platform)
 all_gpl570<-read.csv('all_gpl570.csv')
 
-# search strings
-#search_string_motorNeurons = "\\bbrain\\b|\\bneurons?(al)?\\b&\\bmotor\\b"
-#search_string_diabetes = "\\bpancreas\\b|\\bislets?\\b|\\bbeta-cells\\b|\\bdiabetes\\b"
-#search_string_hepatocytes = "\\bliver\\b&\\bhepatocytes?\\b"
-#search_string_cardiomyocytes = "\\bheart\\b&\\bcardiomyocytes?\\b"
-
-#brain_gpl570 <- filter(all_gpl570,str_detect(title,search_string_brain))
-#diabetes_gse <- filter(all_gpl570,str_detect(title,search_string_diabetes))
-#liver_gpl570 <- filter(all_gpl570,str_detect(title,search_string_hepatocytes))
-#heart_gpl570 <- filter(all_gpl570,str_detect(title,search_string_cardiomyocytes))
-
-# List of the GSM associated with the selected GSE
-#diabetes_gse.gsm = filter(gse_gsm,gse %in% diabetes_gse$gse) # list of series and associated samples
-#diabetes_gsm = filter(gsm,series_id %in% diabetes_gse$gse) # detailed sample information
-
 #dia_gsm <- as.data.frame(diabetes_gsm)
 
 #dia_gsm2 <- dia_gsm[,c(-1,-14:-26,-28:-32)]
-dia_gsm2 <- all_gpl570[,c(2,3,8)]
-
-# this part will connect the app to the database (basically adding 'tissue')
-# user-defined tissues (based on GSE descriptions)
-# UI connects to a,b,c (categories)
-# these are the categories that will ultimately be compared
-#UIa<-'islet'
-#UIb<-'photoreceptors'
-#UIc<-'ganglia'
-#UIx<-'undefined' # this is the category (i.e. sample not used) that will be removed from analysis
-
-#Add something like this line in later to remove the not included selections
-#gsm_to_fetch = dia_gsm2$gsm[dia_Gsm2$category != UIx]
+dia_gsm2 <- all_gpl570
 
 #get_files = TRUE
 get_files = FALSE
@@ -204,7 +177,7 @@ ui <- fluidPage(
                       #DT::dataTableOutput("filteredgsm")
              ),
              tabPanel("Selection details", uiOutput("page4"), 
-                      DT::dataTableOutput("final_table")
+                      DT::dataTableOutput("finishedtable")
              )
   )
 )
@@ -232,13 +205,12 @@ server <- function(input, output) {
   # Searchterms3 <- eventReactive(input$Search, {
   #   gsub(",//b", "//b|", Searchterms2())
   # })
-  # 
-  # #This currently doesn't actually do anything from what I see
-  # Searchterms4 <- eventReactive(input$Search, {
-  #   gsub(" ", "", Searchterms3())
-  # })
   
   filteredgsm <- eventReactive(input$Search, {dplyr::filter(gsm_selected, str_detect(gsm_selected$title, Searchterms()))})
+  
+  # List of the GSM associated with the selected GSE
+  gsegsm2 <- eventReactive(input$Search, {filter(gse_gsm,gse %in% filteredgsm()$gse)}) # list of series and associated samples
+  gsm2 <- eventReactive(input$Search, {filter(gsm,series_id %in% filteredgsm()$gse)}) # detailed sample information
   
   #import dataframe as reactive
   #for some reason this line is not needed
@@ -258,8 +230,8 @@ server <- function(input, output) {
     }
   })
   
-  observeEvent(input$Remove, {
-    final_table <- dplyr::filter(rows$df, c(input$cat1, input$cat2, input$cat3))
+  finishedtable <- eventReactive(input$Remove, {
+    dplyr::filter(rows$df, category %in% c(input$cat1, input$cat2, input$cat3))
   })
   
   output$Key <- renderText(unlist(strsplit(input$Key,",")))
@@ -288,12 +260,18 @@ server <- function(input, output) {
   
   output$gsm_table <- DT::renderDataTable({
     if (input$Lock == 0)
-      return(filteredgsm())
-    else
-      return (rows$df)}, options=list(searching=FALSE))
+      return (filteredgsm()[,c(2,3,8,21)])
+    else ## breaks when there is no search results
+      return (rows$df[,c(2,3,8,21)])}, options=list(searching=FALSE))
   
-  output$final_table <- DT::renderDataTable(final_table())
+  #remove the highlightability of this table; make it not a datatable and just a table
+  output$finishedtable <- DT::renderDataTable({
+    if (input$Remove == 0)
+      return (filteredgsm()[,c(2,3,8,21)])
+    else
+      return (finishedtable()[,c(2,3,8,21)])}, options=list(searching=FALSE))
   
 }
 
 shinyApp(ui, server)
+
